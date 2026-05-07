@@ -26,6 +26,11 @@
 "GETB" return GETB;
 "GETR" return GETR;
 "GETL" return GETL;
+"IF" return IF;
+"ELSE" return ELSE;
+"WHILE" return WHILE;
+"DO" return DO;
+"FUNCTION" return FUNCTION;
 
 [0-9]+ {
     yylval.intValue = static_cast<unsigned int>(std::strtoul(yytext, nullptr, 10));

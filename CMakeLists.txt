@@ -25,6 +25,8 @@ include_directories(
 add_executable(automata3
         main.cpp
         language/AST.cpp
+        language/Interpreter.cpp
+        language/VarTable.cpp
         ${BISON_PARSER_OUTPUTS}
         ${FLEX_LEXER_OUTPUTS}
 )

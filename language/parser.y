@@ -1,14 +1,17 @@
 %code requires {
-#include "Ast.h"
+#include "AST.h"
 }
 
 %{
 #include <iostream>
 #include <cstdlib>
-#include "Ast.h"
+#include "AST.h"
 int yylex();
 void yyerror(const char* err);
-AstNode* root = nullptr;
+static AstNode* root = nullptr;
+AstNode* getRoot() {
+    return root;
+}
 %}
 
 %union {
@@ -42,6 +45,17 @@ AstNode* root = nullptr;
 
 %token <intValue> NUMBER
 %token <strValue> NAME
+%token IF
+%token WHILE
+%token ELSE
+%token DO
+%token FUNCTION
+
+%type <node> block
+%type <node> ifExpr
+%type <node> whileExpr
+%type <node> optionalNewlines
+
 %type <node> program
 %type <node> lines
 %type <node> line
@@ -53,6 +67,23 @@ AstNode* root = nullptr;
 %type <node> expr
 %type <node> robot_cmd
 %type <node> locate_cmd
+
+%type <node> funcDecl
+%type <node> funcCall
+%type <node> funcCallAssign
+%type <node> returnOpt
+%type <node> returnList
+%type <node> returnSingle
+%type <node> paramOpt
+%type <node> paramList
+%type <node> paramSingle
+%type <node> argOpt
+%type <node> argList
+%type <node> argSingle
+%type <node> targetList
+%type <node> targetSingle
+
+
 
 %left OR
 %nonassoc GT LT
@@ -84,6 +115,32 @@ statement:
     | assign { $$ = $1; }
     | inc_dec { $$ = $1; }
     | robot_cmd { $$ = $1; }
+    | ifExpr { $$ = $1; }
+    | whileExpr { $$ = $1; }
+    ;
+
+block:
+    '{' lines '}' { $$ = $2; }
+    ;
+
+optionalNewlines:
+    /* */ { $$ = nullptr; }
+    | optionalNewlines NEWLINE { $$ = nullptr; }
+    ;
+
+ifExpr:
+    IF '(' expr ')' block {
+        $$ = makeIf($3, $5, nullptr);
+    }
+    | IF '(' expr ')' block optionalNewlines ELSE block {
+        $$ = makeIf($3, $5, $8);
+    }
+    ;
+
+whileExpr:
+    WHILE '(' expr ')' DO block {
+        $$ = makeWhile($3, $6);
+    }
     ;
 declar:
     UINT NAME '=' expr {
@@ -93,7 +150,7 @@ declar:
     }
     | BOOLEAN NAME '=' expr {
         /* std::cout << "declare BOOLEAN " << $2 << std::endl; */
-        $$ = makeDeclaration("BOOL", $2, $4, false);
+        $$ = makeDeclaration("BOOLEAN", $2, $4, false);
         free($2);
     }
     ;
@@ -105,7 +162,7 @@ const_declar:
     }
     | CBOOLEAN NAME '=' expr {
         /*std::cout << "declare CBOOLEAN " << $2 << std::endl;*/
-        $$ = makeDeclaration("BOOL", $2, $4, true);
+        $$ = makeDeclaration("BOOLEAN", $2, $4, true);
         free($2);
     }
     ;

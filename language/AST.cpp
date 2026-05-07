@@ -97,9 +97,27 @@ AstNode* makeBinaryOperation(const std::string& operation, AstNode* left, AstNod
     return node;
 }
 
+AstNode* makeIf(AstNode* cond, AstNode* thenNode, AstNode* elseNode) {
+    AstNode* node = new AstNode(NodeType::IF);
+    if (cond != nullptr) node->children.push_back(cond);
+    if (thenNode != nullptr) node->children.push_back(thenNode);
+    if (elseNode != nullptr) node->children.push_back(elseNode);
+    return node;
+}
+
+AstNode *makeWhile(AstNode *cond, AstNode *inner) {
+    AstNode* node = new AstNode(NodeType::WHILE);
+    if (cond != nullptr) node->children.push_back(cond);
+    if (inner != nullptr) node->children.push_back(inner);
+    return node;
+}
+
+
 void printIndent(int depth) {
     for (int i = 0; i < depth; i++) std::cout << "    ";
 }
+
+
 
 void printAst(AstNode* node, int depth) {
     if (node == nullptr) return;
@@ -141,6 +159,12 @@ void printAst(AstNode* node, int depth) {
         case NodeType::BINARY_OP:
             std::cout << "BINARY_OP " << node->op;
             break;
+        case NodeType::IF:
+            std::cout << "IF ";
+            break;
+        case NodeType::WHILE:
+            std::cout << "WHILE ";
+            break;
     }
 
     std::cout << std::endl;
@@ -153,4 +177,52 @@ void deleteAst(AstNode* node) {
         deleteAst(child);
     }
     delete node;
+}
+
+AstNode* makeFuncDecl(const std::string& name, AstNode* returns, AstNode* params, AstNode* body) {
+    AstNode* node = new AstNode(NodeType::FUNC_DECL);
+    node->name = name;
+    if (returns != nullptr) node->children.push_back(returns);
+    else node->children.push_back(createBlock());
+    if (params != nullptr) node->children.push_back(params);
+    else node->children.push_back(createBlock());
+    if (body != nullptr) node->children.push_back(body);
+    else node->children.push_back(createBlock());
+    return node;
+}
+
+AstNode* makeFuncCall(const std::string& name, AstNode* args) {
+    AstNode* node = new AstNode(NodeType::FUNC_CALL);
+    node->name = name;
+    if (args != nullptr) node->children.push_back(args);
+    else node->children.push_back(createBlock());
+    return node;
+}
+
+AstNode* makeFuncCallAssign(const std::string& name, AstNode* targets, AstNode* args) {
+    AstNode* node = new AstNode(NodeType::FUNC_CALL_ASSIGN);
+    node->name = name;
+    if (targets != nullptr) node->children.push_back(targets);
+    else node->children.push_back(createBlock());
+    if (args != nullptr) node->children.push_back(args);
+    else node->children.push_back(createBlock());
+    return node;
+}
+
+AstNode* makeFuncParam(const std::string& name, AstNode* defaultValue) {
+    AstNode* node = new AstNode(NodeType::FUNC_PARAM);
+    node->name = name;
+    if (defaultValue != nullptr) node->children.push_back(defaultValue);
+    return node;
+}
+
+AstNode* makeFuncReturn(const std::string& name, AstNode* defaultValue) {
+    AstNode* node = new AstNode(NodeType::FUNC_RETURN);
+    node->name = name;
+    if (defaultValue != nullptr) node->children.push_back(defaultValue);
+    return node;
+}
+
+AstNode* makeFuncEmpty() {
+    return new AstNode(NodeType::FUNC_EMPTY);
 }

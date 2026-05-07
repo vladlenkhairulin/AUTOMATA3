@@ -15,7 +15,15 @@ enum class NodeType {
     ROBOT_CMD,
     LOCATE_CMD,
     UNARY_OP,
-    BINARY_OP
+    BINARY_OP,
+    IF,
+    WHILE,
+    FUNC_DECL,
+    FUNC_CALL,
+    FUNC_CALL_ASSIGN,
+    FUNC_PARAM,
+    FUNC_RETURN,
+    FUNC_EMPTY
 };
 
 struct AstNode {
@@ -46,9 +54,18 @@ AstNode* makeRobotCmd(const std::string& cmd);
 AstNode* makeLocateCmd(const std::string& cmd);
 AstNode* makeUnaryOperation(const std::string& operation, AstNode* operand);
 AstNode* makeBinaryOperation(const std::string& operation, AstNode* left, AstNode* right);
+AstNode* makeIf(AstNode* cond, AstNode* ifNode, AstNode* elseNode);
+AstNode* makeWhile(AstNode* cond, AstNode* inner);
 
 void printAst(AstNode* node, int depth = 0);
 void deleteAst(AstNode* node);
+
+AstNode* makeFuncDecl(const std::string& name, AstNode* returns, AstNode* params, AstNode* body);
+AstNode* makeFuncCall(const std::string& name, AstNode* args);
+AstNode* makeFuncCallAssign(const std::string& name, AstNode* targets, AstNode* args);
+AstNode* makeFuncParam(const std::string& name, AstNode* defaultValue);
+AstNode* makeFuncReturn(const std::string& name, AstNode* defaultValue);
+AstNode* makeFuncEmpty();
 
 
 #endif //AUTOMATA3_AST_H
