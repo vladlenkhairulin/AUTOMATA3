@@ -1,7 +1,7 @@
 %code requires {
 #include "AST.h"
 }
-
+%define parse.error detailed
 %{
 #include <iostream>
 #include <cstdlib>
@@ -71,7 +71,7 @@ AstNode* getRoot() {
 %type <node> funcDecl
 %type <node> funcCall
 %type <node> funcCallAssign
-%type <node> returnOpt
+
 %type <node> returnList
 %type <node> returnSingle
 %type <node> paramOpt
@@ -117,6 +117,9 @@ statement:
     | robot_cmd { $$ = $1; }
     | ifExpr { $$ = $1; }
     | whileExpr { $$ = $1; }
+    | funcDecl { $$ = $1; }
+    | funcCall { $$ = $1; }
+    | funcCallAssign { $$ = $1; }
     ;
 
 block:
@@ -129,11 +132,11 @@ optionalNewlines:
     ;
 
 ifExpr:
-    IF '(' expr ')' block {
-        $$ = makeIf($3, $5, nullptr);
+    IF '(' expr ')' optionalNewlines block {
+        $$ = makeIf($3, $6, nullptr);
     }
-    | IF '(' expr ')' block optionalNewlines ELSE block {
-        $$ = makeIf($3, $5, $8);
+    | IF '(' expr ')' optionalNewlines block ELSE optionalNewlines block {
+        $$ = makeIf($3, $6, $8);
     }
     ;
 
@@ -142,6 +145,106 @@ whileExpr:
         $$ = makeWhile($3, $6);
     }
     ;
+
+funcDecl:
+    FUNCTION NAME '(' paramOpt ')' block {
+        $$ = makeFuncDecl($2, createBlock(), $4, $6);
+        free($2);
+    }
+    | NAME '=' expr FUNCTION NAME '(' paramOpt ')' block {
+        AstNode* list = appendNode(createBlock(), makeFuncReturn($1, $3));
+        $$ = makeFuncDecl($5, list, $7, $9);
+        free($1);
+        free($5);
+    }
+    | '[' returnList ']' FUNCTION NAME '(' paramOpt ')' block {
+        $$ = makeFuncDecl($5, $2, $7, $9);
+        free($5);
+    }
+    ;
+
+returnList:
+    returnSingle {
+        $$ = appendNode(createBlock(), $1);
+    }
+    | returnList ',' returnSingle {
+        $$ = appendNode($1, $3);
+    }
+    ;
+
+returnSingle:
+    NAME '=' expr {
+        $$ = makeFuncReturn($1, $3);
+        free($1);
+    }
+    ;
+
+paramOpt:
+    /* */ { $$ = createBlock(); }
+    | paramList { $$ = $1; }
+    ;
+paramList:
+    paramSingle { $$ = appendNode(createBlock(), $1); }
+    | paramList ',' paramSingle { $$ = appendNode($1, $3); }
+    ;
+
+paramSingle:
+    NAME '=' expr {
+        $$ = makeFuncParam($1, $3);
+        free($1);
+    }
+    ;
+
+funcCall:
+    NAME '(' argOpt ')' {
+        $$ = makeFuncCall($1, $3);
+        free($1);
+    }
+    ;
+
+funcCallAssign:
+    '[' targetList ']' '=' NAME '(' argOpt ')' {
+        $$ = makeFuncCallAssign($5, $2, $7);
+        free($5);
+    }
+    ;
+
+argOpt:
+    /* */ { $$ = createBlock(); }
+    | argList { $$ = $1; }
+    ;
+argList:
+    argSingle {
+        $$ = appendNode(createBlock(), $1);
+    }
+    | argList ',' argSingle { $$ = appendNode($1, $3); }
+    | argList ',' { $$ = appendNode($1, makeFuncEmpty()); }
+    | ',' argSingle {
+        $$ = appendNode(createBlock(), makeFuncEmpty());
+        $$ = appendNode($$, $2);
+    }
+    ;
+argSingle:
+    expr { $$ = $1; }
+    ;
+
+targetList:
+    targetSingle { $$ = appendNode(createBlock(), $1); }
+    | targetList ',' targetSingle { $$ = appendNode($1, $3); }
+    | targetList ',' { $$ = appendNode($1, makeFuncEmpty()); }
+    | ',' targetSingle {
+        $$ = appendNode(createBlock(), makeFuncEmpty());
+        $$ = appendNode($$, $2);
+    }
+    ;
+targetSingle:
+    NAME {
+        $$ = makeVar($1);
+        free($1);
+    }
+    ;
+
+
 declar:
     UINT NAME '=' expr {
         /* std::cout << "declare UINT " << $2 <<std::endl; */
@@ -218,6 +321,17 @@ expr:
     }
     | robot_cmd {
         $$ = $1;
+    }
+    | funcCall {
+        $$ = $1;
+    }
+    | INC NAME {
+        $$ = makeIncDec("INC", $2);
+        free($2);
+    }
+    | DEC NAME {
+        $$ = makeIncDec("DEC", $2);
+        free($2);
     }
     ;
 

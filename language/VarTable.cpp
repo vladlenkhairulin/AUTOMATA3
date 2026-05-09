@@ -8,7 +8,7 @@ void VarTable::pushScope() {
 }
 void VarTable::popScope() {
     if (scoping.empty()) {
-        throw std::runtime_error("Runtime error: empty scope");
+        throw std::runtime_error("Runtime error: no scopes currently");
     }
     scoping.pop_back();
 }

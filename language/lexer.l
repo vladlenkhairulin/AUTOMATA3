@@ -3,6 +3,7 @@
 #include "parser.tab.h"
 #include <cstdlib>
 #include <cstring>
+void yyerror(const char *);
 %}
 
 %%
@@ -41,8 +42,19 @@
     return NAME;
 }
 
+"=" return '=';
+"(" return '(';
+")" return ')';
+"{" return '{';
+"}" return '}';
+"[" return '[';
+"]" return ']';
+"," return ',';
+
 \n return NEWLINE;
 [ \t\r]+ ;
-. return yytext[0];
-
+. {
+    yyerror("Unknown character");
+    return yytext[0];
+}
 %%
