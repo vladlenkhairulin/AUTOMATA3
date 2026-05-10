@@ -4,13 +4,19 @@
 enum class ValueType {
     NONE,
     UINT,
-    BOOLEAN
+    BOOLEAN,
+    ARR1UINT,
+    ARR1BOOL,
+    ARR2BOOL,
+    ARR2UINT
 };
 
 struct Value {
     ValueType type = ValueType::NONE;
     unsigned int uintValue = 0;
     bool boolValue = false;
+    std::vector<Value> arr1Values;
+    std::vector<std::vector<Value>> arr2Rows;
     static Value makeUint(unsigned int value) {
         Value res;
         res.type = ValueType::UINT;
@@ -25,6 +31,18 @@ struct Value {
     }
     static Value makeNone() {
         return Value{};
+    }
+    static Value makeArr1(ValueType type, const std::vector<Value>& values) {
+        Value res;
+        res.type = type;
+        res.arr1Values = values;
+        return res;
+    }
+    static Value makeArr2(ValueType type, const std::vector<std::vector<Value>>& values) {
+        Value res;
+        res.type = type;
+        res.arr2Rows = values;
+        return res;
     }
 };
 

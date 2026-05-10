@@ -33,6 +33,15 @@ void yyerror(const char *);
 "DO" return DO;
 "FUNCTION" return FUNCTION;
 
+"1DARRAYOFBOOL" return ARR1BOOL;
+"2DARRAYOFBOOL" return ARR2BOOL;
+"1DARRAYOFUINT" return ARR1UINT;
+"2DARRAYOFUINT" return ARR2UINT;
+"EXTEND1" return EXTEND1;
+"EXTEND2" return EXTEND2;
+"SIZE1" return SIZE1;
+"SIZE2" return SIZE2;
+
 [0-9]+ {
     yylval.intValue = static_cast<unsigned int>(std::strtoul(yytext, nullptr, 10));
     return NUMBER;
@@ -50,6 +59,7 @@ void yyerror(const char *);
 "[" return '[';
 "]" return ']';
 "," return ',';
+";" return ';';
 
 \n return NEWLINE;
 [ \t\r]+ ;

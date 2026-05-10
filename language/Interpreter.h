@@ -21,18 +21,23 @@ private:
     void executeFuncDeclaration(AstNode* node);
     void executeFuncCallAssign(AstNode* node);
     void executeFuncCall(AstNode* node);
+    void executeArrDeclaration(AstNode* node);
+    void executeArrSet(AstNode* node);
+    void executeArrExtend(AstNode* node);
+
     Value evaluateFuncCall(AstNode* node);
-
     std::vector<Value> evaluateArgs(AstNode *argsBlock);
-
     Value evaluateIncDec(AstNode* node);
-
-    std::vector<Value> callFunction(const std::string &name, AstNode *args);
-
     Value evaluateUnaryOp(AstNode* node);
     Value evaluateBinaryOp(AstNode* node);
+    Value evaluateArrSize(AstNode* node);
+    Value evaluateArrGet(AstNode* node);
+
+    std::vector<Value> callFunction(const std::string &name, AstNode *args);
     void checkBool(const Value& value);
     void checkUint(const Value& value);
+    unsigned int getIndex(AstNode* node);
+    Value getDefaultType(ValueType type);
 public:
     void run(AstNode* root);
 };

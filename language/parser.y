@@ -50,6 +50,15 @@ AstNode* getRoot() {
 %token ELSE
 %token DO
 %token FUNCTION
+%token ARR1BOOL
+%token ARR2BOOL
+%token ARR2UINT
+%token ARR1UINT
+%token EXTEND1
+%token EXTEND2
+%token SIZE1
+%token SIZE2
+
 
 %type <node> block
 %type <node> ifExpr
@@ -82,8 +91,12 @@ AstNode* getRoot() {
 %type <node> argSingle
 %type <node> targetList
 %type <node> targetSingle
-
-
+%type <node> arrDecl
+%type <node> arrSet
+%type <node> arrExtend
+%type <node> arrSize
+%type <node> arr1Values
+%type <node> arr2Rows
 
 %left OR
 %nonassoc GT LT
@@ -120,6 +133,9 @@ statement:
     | funcDecl { $$ = $1; }
     | funcCall { $$ = $1; }
     | funcCallAssign { $$ = $1; }
+    | arrDecl { $$ = $1; }
+    | arrSet { $$ = $1; }
+    | arrExtend { $$ = $1; }
     ;
 
 block:
@@ -333,6 +349,7 @@ expr:
         $$ = makeIncDec("DEC", $2);
         free($2);
     }
+    | arrSize { $$ = $1; }
     ;
 
 locate_cmd:
@@ -370,6 +387,70 @@ robot_cmd:
     | RIGHT {
         $$ = makeRobotCmd("RIGHT");
         /*std::cout << "RIGHT " << std::endl;*/
+    }
+    ;
+
+arrDecl:
+    ARR1UINT NAME '=' '[' arr1Values ']' {
+        $$ = makeArrayDeclaration("ARR1UINT", $2, $5);
+        free($2);
+    }
+    | ARR1BOOL NAME '=' '[' arr1Values ']' {
+        $$ = makeArrayDeclaration("ARR1BOOL", $2, $5);
+        free($2);
+    }
+    | ARR2UINT NAME '=' '[' arr2Rows ']' {
+        $$ = makeArrayDeclaration("ARR2UINT", $2, $5);
+        free($2);
+    }
+    | ARR2BOOL NAME '=' '[' arr2Rows ']' {
+        $$ = makeArrayDeclaration("ARR2BOOL", $2, $5);
+        free($2);
+    }
+    ;
+
+arr1Values:
+    expr { $$ = appendNode(createBlock(), $1); }
+    | arr1Values ',' expr { $$ = appendNode($1, $3); }
+    ;
+arr2Rows:
+    arr1Values { $$ = appendNode(createBlock(), $1); }
+    | arr2Rows ';' arr1Values { $$ = appendNode($1, $3); }
+    ;
+
+arrSet:
+    NAME '(' expr ')' '=' expr {
+        AstNode* indices = appendNode(createBlock(), $3);
+        $$ = makeArraySet($1, indices, $6);
+        free($1);
+    }
+    | NAME '(' expr ',' expr ')' '=' expr {
+        AstNode* indices = appendNode(createBlock(), $3);
+        indices = appendNode(indices, $5);
+        $$ = makeArraySet($1, indices, $8);
+        free($1);
+    }
+    ;
+
+arrExtend:
+    EXTEND1 NAME expr {
+        $$ = makeArrayExtend("EXTEND1", $2, $3, nullptr);
+        free($2);
+    }
+    | EXTEND2 NAME expr expr {
+        $$ = makeArrayExtend("EXTEND2", $2, $3, $4);
+        free($2);
+    }
+    ;
+
+arrSize:
+    SIZE1 NAME {
+        $$ = makeArraySize("SIZE1", $2, nullptr);
+        free($2);
+    }
+    | SIZE2 NAME expr {
+        $$ = makeArraySize("SIZE2", $2, $3);
+        free($2);
     }
     ;
 

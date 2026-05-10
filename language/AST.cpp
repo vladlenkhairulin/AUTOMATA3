@@ -1,5 +1,6 @@
 #include "AST.h"
 #include <iostream>
+#include <bits/locale_facets_nonio.h>
 
 AstNode* createNode(NodeType type) {
     return new AstNode(type);
@@ -105,7 +106,7 @@ AstNode* makeIf(AstNode* cond, AstNode* thenNode, AstNode* elseNode) {
     return node;
 }
 
-AstNode *makeWhile(AstNode *cond, AstNode *inner) {
+AstNode* makeWhile(AstNode *cond, AstNode *inner) {
     AstNode* node = new AstNode(NodeType::WHILE);
     if (cond != nullptr) node->children.push_back(cond);
     if (inner != nullptr) node->children.push_back(inner);
@@ -165,8 +166,19 @@ void printAst(AstNode* node, int depth) {
         case NodeType::WHILE:
             std::cout << "WHILE ";
             break;
+        case NodeType::ARR_DECL:
+            std::cout << "ARR_DECL " << node->dataType << " " << node->name;
+            break;
+        case NodeType::ARR_SET:
+            std::cout << "ARR_SET " << node->name;
+            break;
+        case NodeType::ARR_EXTEND:
+            std::cout << "ARR " << node->op << " " << node->name;
+            break;
+        case NodeType::ARR_SIZE:
+            std::cout << "ARR " << node->op << " " << node->name;
+            break;
     }
-
     std::cout << std::endl;
     for (AstNode* child : node->children) printAst(child, depth + 1);
 }
@@ -226,3 +238,39 @@ AstNode* makeFuncReturn(const std::string& name, AstNode* defaultValue) {
 AstNode* makeFuncEmpty() {
     return new AstNode(NodeType::FUNC_EMPTY);
 }
+
+AstNode* makeArrayDeclaration(const std::string& typeName, const std::string& name, AstNode* values) {
+    AstNode* node = new AstNode(NodeType::ARR_DECL);
+    node->dataType = typeName;
+    node->name = name;
+    if (values != nullptr) node->children.push_back(values);
+    return node;
+}
+
+AstNode *makeArraySet(const std::string &name, AstNode *indexes, AstNode *value) {
+    AstNode* node = new AstNode(NodeType::ARR_SET);
+    node->name = name;
+    if (indexes != nullptr) node->children.push_back(indexes);
+    if (value != nullptr) node->children.push_back(value);
+    return node;
+}
+
+AstNode* makeArrayExtend(const std::string& op, const std::string& name, AstNode* first, AstNode* second) {
+    AstNode* node = new AstNode(NodeType::ARR_EXTEND);
+    node->op = op;
+    node->name = name;
+    if (first != nullptr) node->children.push_back(first);
+    if (second != nullptr) node->children.push_back(second);
+    return node;
+}
+
+AstNode* makeArraySize(const std::string& op, const std::string& name, AstNode* index) {
+    AstNode* node = new AstNode(NodeType::ARR_SIZE);
+    node->op = op;
+    node->name = name;
+    if (index != nullptr) node->children.push_back(index);
+    return node;
+}
+
+
+

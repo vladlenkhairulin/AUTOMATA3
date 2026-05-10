@@ -3,6 +3,15 @@
 #include <iostream>
 #include <stdexcept>
 
+void printValue(const Value& value) {
+    if (value.type == ValueType::UINT) {
+        std::cout << value.uintValue;
+    }
+    else if (value.type == ValueType::BOOLEAN) {
+        std::cout << (value.boolValue ? "TRUE" : "FALSE");
+    }
+}
+
 void VarTable::pushScope() {
     scoping.push_back({});
 }
@@ -60,6 +69,21 @@ void VarTable::printVarTable() const {
         std::cout << pair.first << " = ";
         if (pair.second.value.type == ValueType::UINT) std::cout << pair.second.value.uintValue;
         else if (pair.second.value.type == ValueType::BOOLEAN) std::cout << (pair.second.value.boolValue? "TRUE" : "FALSE");
+        else if (pair.second.value.type == ValueType::ARR1UINT || pair.second.value.type == ValueType::ARR1BOOL) {
+            for (Value val : pair.second.value.arr1Values) {
+                printValue(val);
+                std::cout << " ";
+            }
+        }
+        else if (pair.second.value.type == ValueType::ARR2UINT || pair.second.value.type == ValueType::ARR2BOOL) {
+            for (std::vector row : pair.second.value.arr2Rows) {
+                for (Value val : row) {
+                    printValue(val);
+                    std::cout << " ";
+                }
+                std::cout << "; ";
+            }
+        }
         else throw std::runtime_error("Runtime error: variable has NONE value: " + pair.first);
         std::cout << std::endl;
     }

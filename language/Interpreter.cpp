@@ -50,6 +50,15 @@ void Interpreter::execute(AstNode* node) {
         case NodeType::ROBOT_CMD:
             evaluate(node);
             break;
+        case NodeType::ARR_DECL:
+            executeArrDeclaration(node);
+            break;
+        case NodeType::ARR_SET:
+            executeArrSet(node);
+            break;
+        case NodeType::ARR_EXTEND:
+            executeArrExtend(node);
+            break;
         default:
             throw std::runtime_error("Unknown node type");
     }
@@ -76,6 +85,8 @@ Value Interpreter::evaluate(AstNode* node) {
             return Value::makeBool(true);
         case NodeType::LOCATE_CMD:
             return Value::makeUint(0);
+        case NodeType::ARR_SIZE:
+            return evaluateArrSize(node);
         default:
             throw std::runtime_error("Unknown node type in evaluate");
     }
@@ -213,11 +224,14 @@ Value Interpreter::evaluateFuncCall(AstNode* node) {
     if (node->children.empty()) {
         throw std::runtime_error("Missing args in function call: " + node->name);
     }
-    std::vector<Value> returns = callFunction(node->name, node->children[0]);
-    if (returns.empty()) {
-        throw std::runtime_error("Missing return value: " + node->name);
+    if (functions.contains(node->name)) {
+        std::vector<Value> returns = callFunction(node->name, node->children[0]);
+        if (returns.empty()) {
+            throw std::runtime_error("Missing return value: " + node->name);
+        }
+        return returns[0];
     }
-    return returns[0];
+    return evaluateArrGet(node);
 }
 
 std::vector<Value> Interpreter::evaluateArgs(AstNode* argsBlock) {
@@ -291,4 +305,165 @@ std::vector<Value> Interpreter::callFunction(const std::string& name, AstNode* a
         varTable.popScope();
         throw;
     }
+}
+
+unsigned int Interpreter::getIndex(AstNode* node) {
+    Value value = evaluate(node);
+    if (value.type != ValueType::UINT) {
+        throw std::runtime_error("Array index not UINT " + node->name);
+    }
+    return value.uintValue;
+}
+
+Value Interpreter::getDefaultType(ValueType type){
+    if (type == ValueType::ARR1UINT || type == ValueType::ARR2UINT) {
+        return Value::makeUint(0);
+    }
+    return Value::makeBool(false);
+}
+
+void Interpreter::executeArrDeclaration(AstNode *node) {
+    std::vector<Value> oneD;
+    std::vector<std::vector<Value>> twoD;
+    if (node->dataType == "ARR1UINT" || node->dataType == "ARR1BOOL") {
+        ValueType elType = (node->dataType == "ARR1UINT")? ValueType::UINT : ValueType::BOOLEAN;
+        for (AstNode* child : node->children[0]->children) {
+            Value value = evaluate(child);
+            if (value.type != elType) {
+                throw std::runtime_error("Wrong type of element in array " + node->name);
+            }
+            oneD.push_back(value);
+        }
+        ValueType arrType = (node->dataType == "ARR1UINT")? ValueType::ARR1UINT : ValueType::ARR1BOOL;
+        varTable.declareVar(node->name, Value::makeArr1(arrType, oneD), false);
+        return;
+    }
+    else {
+        ValueType elType = (node->dataType == "ARR2UINT")? ValueType::UINT : ValueType::BOOLEAN;
+        for (AstNode* row : node->children[0]->children) {
+            std::vector<Value> rowValues;
+            for (AstNode* child : row->children) {
+                Value value = evaluate(child);
+                if (value.type != elType) {
+                    throw std::runtime_error("Wrong type of element in array " + node->name);
+                }
+                rowValues.push_back(value);
+            }
+            twoD.push_back(rowValues);
+        }
+        ValueType arrType = (node->dataType == "ARR2UINT")? ValueType::ARR2UINT : ValueType::ARR2BOOL;
+        varTable.declareVar(node->name, Value::makeArr2(arrType, twoD), false);
+    }
+}
+
+void Interpreter::executeArrSet(AstNode* node) {
+    Var& var = varTable.getVar(node->name);
+    AstNode*  indices = node->children[0];
+    Value value = evaluate(node->children[1]);
+
+    if (indices->children.size() == 1) {
+        if (var.value.type != ValueType::ARR1UINT && var.value.type != ValueType::ARR1BOOL) {
+            throw std::runtime_error("Expected 1D array in SET: " + node->name);
+        }
+        unsigned int i = getIndex(indices->children[0]);
+        if (i >= var.value.arr1Values.size()) {
+            throw std::runtime_error("Array index out of bounds: " + node->name);
+        }
+        if (value.type != var.value.arr1Values[i].type) {
+            throw std::runtime_error("Wrong element type in SET: " + node->name);
+        }
+        var.value.arr1Values[i] = value;
+        return;
+    }
+    if (var.value.type != ValueType::ARR2UINT && var.value.type != ValueType::ARR2BOOL) {
+        throw std::runtime_error("Expected 2D array in SET: " + node->name);
+    }
+    unsigned int i = getIndex(indices->children[0]);
+    unsigned int j = getIndex(indices->children[1]);
+    if (i >= var.value.arr2Rows.size() || j >= var.value.arr2Rows[i].size()) {
+        throw std::runtime_error("Array index out of bounds: " + node->name);
+    }
+    if (value.type != var.value.arr2Rows[i][j].type) {
+        throw std::runtime_error("Wrong element type in SET: " + node->name);
+    }
+    var.value.arr2Rows[i][j] = value;
+}
+
+void Interpreter::executeArrExtend(AstNode *node) {
+    Var& var = varTable.getVar(node->name);
+    if (var.value.type != ValueType::ARR1UINT && var.value.type != ValueType::ARR2UINT && var.value.type != ValueType::ARR1BOOL && var.value.type != ValueType::ARR2BOOL) {
+        throw std::runtime_error("Wrong variable type in EXTEND: " + node->name);
+    }
+    if (node->op == "EXTEND1") {
+        unsigned int newSize = getIndex(node->children[0]);
+        if (var.value.type == ValueType::ARR1BOOL || var.value.type == ValueType::ARR1UINT) {
+            if (newSize < var.value.arr1Values.size()) {
+                throw std::runtime_error("Trying to decrease in EXTEND1: " + node->name);
+            }
+            var.value.arr1Values.resize(newSize, getDefaultType(var.value.type));
+            return;
+        }
+        if (newSize < var.value.arr2Rows.size()) {
+            throw std::runtime_error("Trying to decrease in EXTEND1: " + node->name);
+        }
+        size_t refSize = 0;
+        if (!var.value.arr2Rows.empty()) {
+            refSize = var.value.arr2Rows.back().size();
+        }
+        Value defValue = getDefaultType(var.value.type);
+        while (var.value.arr2Rows.size() < newSize) {
+            var.value.arr2Rows.push_back(std::vector<Value>(refSize, defValue));
+        }
+        return;
+    }
+    else {
+        unsigned int rowIndex = getIndex(node->children[0]);
+        unsigned int newSize = getIndex(node->children[1]);
+        if (var.value.arr2Rows.size() <= rowIndex) {
+            throw std::runtime_error("EXTEND2 out of range rowIndex: " + node->name);
+        }
+        if (var.value.arr2Rows[rowIndex].size() > newSize) {
+            throw std::runtime_error("Trying to decrease in EXTEND2: " + node->name);
+        }
+        var.value.arr2Rows[rowIndex].resize(newSize, getDefaultType(var.value.type));
+    }
+}
+
+Value Interpreter::evaluateArrSize(AstNode* node) {
+    Var& var = varTable.getVar(node->name);
+    if (node->op == "SIZE1") {
+        if (var.value.type == ValueType::ARR1UINT || var.value.type == ValueType::ARR1BOOL) {
+            return Value::makeUint(static_cast<unsigned int>(var.value.arr1Values.size()));
+        }
+        return Value::makeUint(static_cast<unsigned int>(var.value.arr2Rows.size()));
+    }
+    unsigned int i = getIndex(node->children[0]);
+    if (i >= var.value.arr2Rows.size()) {
+        throw std::runtime_error("SIZE2 out of bounds: " + node->name);
+    }
+    return Value::makeUint(static_cast<unsigned int>(var.value.arr2Rows[i].size()));
+}
+
+Value Interpreter::evaluateArrGet(AstNode* node) {
+    Var& var = varTable.getVar(node->name);
+    AstNode* args = node->children[0];
+    if (args->children.size() == 1) {
+        if (var.value.type != ValueType::ARR1UINT && var.value.type != ValueType::ARR1BOOL) {
+            throw std::runtime_error("Expected 1D array: " + node->name);
+        }
+        unsigned int i = getIndex(args->children[0]);
+        if (i >= var.value.arr1Values.size()) {
+            throw std::runtime_error("GET index out of bounds: " + node->name);
+        }
+        return var.value.arr1Values[i];
+    }
+    if (var.value.type != ValueType::ARR2UINT && var.value.type != ValueType::ARR2BOOL) {
+        throw std::runtime_error("Expected 2D array: " + node->name);
+    }
+    unsigned int i = getIndex(args->children[0]);
+    unsigned int j = getIndex(args->children[1]);
+    if (i >= var.value.arr2Rows.size() || j >= var.value.arr2Rows[i].size()) {
+        throw std::runtime_error("GET 2D index out of bounds: " + node->name);
+    }
+    return var.value.arr2Rows[i][j];
 }

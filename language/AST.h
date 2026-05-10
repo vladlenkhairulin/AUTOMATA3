@@ -23,7 +23,11 @@ enum class NodeType {
     FUNC_CALL_ASSIGN,
     FUNC_PARAM,
     FUNC_RETURN,
-    FUNC_EMPTY
+    FUNC_EMPTY,
+    ARR_DECL,
+    ARR_SET,
+    ARR_EXTEND,
+    ARR_SIZE
 };
 
 struct AstNode {
@@ -39,8 +43,11 @@ struct AstNode {
     explicit AstNode(NodeType type) : nodeType(type) {};
 };
 
+
 AstNode* createNode(NodeType type);
+
 AstNode* createProgram(AstNode *statements);
+
 AstNode* createBlock();
 AstNode* appendNode(AstNode* block, AstNode* node);
 
@@ -57,15 +64,18 @@ AstNode* makeBinaryOperation(const std::string& operation, AstNode* left, AstNod
 AstNode* makeIf(AstNode* cond, AstNode* ifNode, AstNode* elseNode);
 AstNode* makeWhile(AstNode* cond, AstNode* inner);
 
-void printAst(AstNode* node, int depth = 0);
-void deleteAst(AstNode* node);
-
 AstNode* makeFuncDecl(const std::string& name, AstNode* returns, AstNode* params, AstNode* body);
 AstNode* makeFuncCall(const std::string& name, AstNode* args);
 AstNode* makeFuncCallAssign(const std::string& name, AstNode* targets, AstNode* args);
 AstNode* makeFuncParam(const std::string& name, AstNode* defaultValue);
 AstNode* makeFuncReturn(const std::string& name, AstNode* defaultValue);
 AstNode* makeFuncEmpty();
+void printAst(AstNode* node, int depth = 0);
+void deleteAst(AstNode* node);
 
+AstNode* makeArrayDeclaration(const std::string& typeName, const std::string& name, AstNode* values);
+AstNode* makeArraySet(const std::string& name, AstNode* indexes, AstNode* value);
+AstNode* makeArrayExtend(const std::string& op, const std::string& name, AstNode* first, AstNode* second);
+AstNode* makeArraySize(const std::string& op, const std::string& name, AstNode* index);
 
 #endif //AUTOMATA3_AST_H
