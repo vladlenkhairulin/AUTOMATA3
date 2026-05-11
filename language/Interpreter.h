@@ -5,12 +5,14 @@
 #include "VarTable.h"
 #include <unordered_map>
 #include <vector>
+#include "../game/Robot.h"
 
 
 class Interpreter {
 private:
     VarTable varTable;
     std::unordered_map<std::string, AstNode*> functions;
+    Robot* game = nullptr;
     void execute(AstNode* node);
     Value evaluate(AstNode* node);
     void executeDeclaration(AstNode* node);
@@ -40,6 +42,9 @@ private:
     Value getDefaultType(ValueType type);
 public:
     void run(AstNode* root);
+    explicit Interpreter(Robot* game) {
+        this->game = game;
+    };
 };
 
 

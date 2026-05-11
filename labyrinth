@@ -1,0 +1,102 @@
+CUINT INF = 4294967295
+CUINT maxSteps = 500
+UINT d = 0
+UINT steps = 0
+BOOLEAN moved = FALSE
+BOOLEAN found = FALSE
+
+FUNCTION leftStep() {
+    IF(LEFT) {
+    } ELSE {
+        IF(FORW) {
+        } ELSE {
+            IF(RIGHT) {
+            } ELSE {
+                BACK
+            }
+        }
+    }
+}
+
+FUNCTION checkExit() {
+    found = FALSE
+    d = GETF
+    IF(d LT INF) {
+        found = TRUE
+    }
+    d = GETL
+    IF(d LT INF) {
+        found = TRUE
+    }
+    d = GETR
+    IF(d LT INF) {
+        found = TRUE
+    }
+    d = GETB
+    IF(d LT INF) {
+        found = TRUE
+    }
+}
+
+FUNCTION goToVisibleExit() {
+    moved = FALSE
+
+    d = GETF
+    IF(d LT INF) {
+        IF(d GT 0) {
+            FORW
+            moved = TRUE
+        } ELSE {
+            steps = maxSteps
+            moved = TRUE
+        }
+    }
+
+    IF(NOT moved) {
+        d = GETL
+        IF(d LT INF) {
+            LEFT
+            moved = TRUE
+        }
+    }
+
+    IF(NOT moved) {
+        d = GETR
+        IF(d LT INF) {
+            RIGHT
+            moved = TRUE
+        }
+    }
+
+    IF(NOT moved) {
+        d = GETB
+        IF(d LT INF) {
+            BACK
+            moved = TRUE
+        }
+    }
+}
+
+FUNCTION tryPushOrUndo() {
+    IF(PUSHF) {
+        checkExit()
+        IF(found) {
+            FORW
+            moved = TRUE
+        } ELSE {
+            UNDO
+        }
+    }
+}
+
+WHILE(steps LT maxSteps) DO {
+    moved = FALSE
+    goToVisibleExit()
+    IF(NOT moved) {
+        tryPushOrUndo()
+    }
+    IF(NOT moved) {
+        leftStep()
+    }
+    INC steps
+}

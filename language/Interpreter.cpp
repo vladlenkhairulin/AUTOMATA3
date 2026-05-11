@@ -13,7 +13,7 @@ void Interpreter::checkUint(const Value &value) {
 
 void Interpreter::run(AstNode* root) {
     execute(root);
-    varTable.printVarTable();
+    //varTable.printVarTable();
 }
 
 void Interpreter::execute(AstNode* node) {
@@ -82,9 +82,24 @@ Value Interpreter::evaluate(AstNode* node) {
         case NodeType::INC_DEC:
             return evaluateIncDec(node);
         case NodeType::ROBOT_CMD:
-            return Value::makeBool(true);
+            if (game == nullptr) {
+                throw std::runtime_error("Runtime error: no game");
+            }
+            if (node->op == "BACK" || node->op == "FORW" || node->op == "RIGHT" ||  node->op == "LEFT") {
+                return Value::makeBool(game->move(node->op));
+            }
+            if (node->op == "PUSHF" || node->op == "PUSHB" || node->op == "PUSHL" || node->op == "PUSHR") {
+                return Value::makeBool(game->pushWall(node->op));
+            }
+            if (node->op == "UNDO") {
+                return Value::makeBool(game->undo());
+            }
+            throw std::runtime_error("Unknown ROBOT command type");
         case NodeType::LOCATE_CMD:
-            return Value::makeUint(0);
+            if (game == nullptr) {
+                throw std::runtime_error("Runtime error: no game");
+            }
+            return Value::makeUint(game->getDist(node->op));
         case NodeType::ARR_SIZE:
             return evaluateArrSize(node);
         default:

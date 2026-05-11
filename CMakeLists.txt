@@ -18,15 +18,35 @@ FLEX_TARGET(LEXER
 
 ADD_FLEX_BISON_DEPENDENCY(LEXER PARSER)
 
+add_library(game
+        game/Robot.cpp
+)
+
+target_include_directories(game PUBLIC
+        game
+)
+
+add_library(language
+        language/AST.cpp
+        language/VarTable.cpp
+        language/Interpreter.cpp
+        ${BISON_PARSER_OUTPUTS}
+        ${FLEX_LEXER_OUTPUTS}
+)
+target_include_directories(language PUBLIC
+        language
+        game
+        ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(language PUBLIC game)
+
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
         language
 )
 add_executable(automata3
         main.cpp
-        language/AST.cpp
-        language/Interpreter.cpp
-        language/VarTable.cpp
-        ${BISON_PARSER_OUTPUTS}
-        ${FLEX_LEXER_OUTPUTS}
 )
+
+target_link_libraries(automata3 PRIVATE language game)

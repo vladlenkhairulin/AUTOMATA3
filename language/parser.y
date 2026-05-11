@@ -41,6 +41,11 @@ AstNode* getRoot() {
 %token GETB
 %token GETR
 %token GETL
+%token PUSHF
+%token PUSHB
+%token PUSHR
+%token PUSHL
+%token UNDO
 %token NEWLINE
 
 %token <intValue> NUMBER
@@ -152,7 +157,7 @@ ifExpr:
         $$ = makeIf($3, $6, nullptr);
     }
     | IF '(' expr ')' optionalNewlines block ELSE optionalNewlines block {
-        $$ = makeIf($3, $6, $8);
+        $$ = makeIf($3, $6, $9);
     }
     ;
 
@@ -388,6 +393,11 @@ robot_cmd:
         $$ = makeRobotCmd("RIGHT");
         /*std::cout << "RIGHT " << std::endl;*/
     }
+    | PUSHF { $$ = makeRobotCmd("PUSHF"); }
+    | PUSHB { $$ = makeRobotCmd("PUSHB"); }
+    | PUSHR { $$ = makeRobotCmd("PUSHR"); }
+    | PUSHL { $$ = makeRobotCmd("PUSHL"); }
+    | UNDO { $$ = makeRobotCmd("UNDO"); }
     ;
 
 arrDecl:
