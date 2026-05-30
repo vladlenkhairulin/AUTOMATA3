@@ -1,6 +1,8 @@
 #ifndef AUTOMATA3_VALUE_H
 #define AUTOMATA3_VALUE_H
 
+#include <vector>
+
 enum class ValueType {
     NONE,
     UINT,

@@ -97,11 +97,13 @@ AstNode* getRoot() {
 %type <node> targetList
 %type <node> targetSingle
 %type <node> arrDecl
-%type <node> arrSet
+
 %type <node> arrExtend
 %type <node> arrSize
 %type <node> arr1Values
 %type <node> arr2Rows
+%type <node> voidFuncOrArrSet
+%type <node> indexList
 
 %left OR
 %nonassoc GT LT
@@ -136,10 +138,9 @@ statement:
     | ifExpr { $$ = $1; }
     | whileExpr { $$ = $1; }
     | funcDecl { $$ = $1; }
-    | funcCall { $$ = $1; }
+    | voidFuncOrArrSet { $$ = $1; }
     | funcCallAssign { $$ = $1; }
     | arrDecl { $$ = $1; }
-    | arrSet { $$ = $1; }
     | arrExtend { $$ = $1; }
     ;
 
@@ -150,6 +151,17 @@ block:
 optionalNewlines:
     /* */ { $$ = nullptr; }
     | optionalNewlines NEWLINE { $$ = nullptr; }
+    ;
+
+voidFuncOrArrSet:
+    NAME '(' argOpt ')' {
+        $$ = makeFuncCall($1, $3);
+        free($1);
+    }
+    | NAME '(' argOpt ')' '=' expr {
+        $$ = makeArraySet($1, $3, $6);
+        free($1);
+    }
     ;
 
 ifExpr:
@@ -240,6 +252,10 @@ argList:
     }
     | argList ',' argSingle { $$ = appendNode($1, $3); }
     | argList ',' { $$ = appendNode($1, makeFuncEmpty()); }
+    | argList ',' ',' argSingle {
+        $$ = appendNode($1, makeFuncEmpty());
+        $$ = appendNode($$, $4);
+    }
     | ',' argSingle {
         $$ = appendNode(createBlock(), makeFuncEmpty());
         $$ = appendNode($$, $2);
@@ -253,6 +269,10 @@ targetList:
     targetSingle { $$ = appendNode(createBlock(), $1); }
     | targetList ',' targetSingle { $$ = appendNode($1, $3); }
     | targetList ',' { $$ = appendNode($1, makeFuncEmpty()); }
+    | targetList ',' ',' targetSingle {
+        $$ = appendNode($1, makeFuncEmpty());
+        $$ = appendNode($$, $4);
+    }
     | ',' targetSingle {
         $$ = appendNode(createBlock(), makeFuncEmpty());
         $$ = appendNode($$, $2);
@@ -426,20 +446,6 @@ arr1Values:
 arr2Rows:
     arr1Values { $$ = appendNode(createBlock(), $1); }
     | arr2Rows ';' arr1Values { $$ = appendNode($1, $3); }
-    ;
-
-arrSet:
-    NAME '(' expr ')' '=' expr {
-        AstNode* indices = appendNode(createBlock(), $3);
-        $$ = makeArraySet($1, indices, $6);
-        free($1);
-    }
-    | NAME '(' expr ',' expr ')' '=' expr {
-        AstNode* indices = appendNode(createBlock(), $3);
-        indices = appendNode(indices, $5);
-        $$ = makeArraySet($1, indices, $8);
-        free($1);
-    }
     ;
 
 arrExtend:

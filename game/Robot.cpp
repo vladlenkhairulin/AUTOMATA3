@@ -76,6 +76,21 @@ bool Robot::loadGameInfo(const std::string &filename) {
             in >> exitX >> exitY;
         }
     }
+
+    if (!inside(roboX, roboY)) return false;
+    if (!inside(exitX, exitY)) return false;
+    if (walls[roboY][roboX]) {
+        std::cout << "Robot is placed inside wall" << std::endl;
+        return false;
+    }
+    if (walls[exitY][exitX]) {
+        std::cout << "Exit is placed inside wall" << std::endl;
+        return false;
+    }
+    if (roboX == exitX && roboY == exitY) {
+        std::cout << "Robot and exit have same coordinates" << std::endl;
+        return false;
+    }
     return true;
 }
 

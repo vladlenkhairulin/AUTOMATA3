@@ -1,6 +1,5 @@
 #include "AST.h"
 #include <iostream>
-#include <bits/locale_facets_nonio.h>
 
 AstNode* createNode(NodeType type) {
     return new AstNode(type);

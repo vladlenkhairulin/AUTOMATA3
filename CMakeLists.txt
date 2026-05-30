@@ -50,3 +50,6 @@ add_executable(automata3
 )
 
 target_link_libraries(automata3 PRIVATE language game)
+
+enable_testing()
+add_subdirectory(tests)

@@ -13,7 +13,7 @@ void Interpreter::checkUint(const Value &value) {
 
 void Interpreter::run(AstNode* root) {
     execute(root);
-    //varTable.printVarTable();
+    varTable.printVarTable();
 }
 
 void Interpreter::execute(AstNode* node) {
@@ -160,7 +160,7 @@ void Interpreter::executeIf(AstNode* node) {
 }
 
 void Interpreter::executeWhile(AstNode* node) {
-    if (node->children.size() < 2) {
+    if (node->children.size() != 2) {
         throw std::runtime_error("Incorrect while: " + node->name);
     }
     while (true) {
@@ -295,11 +295,7 @@ std::vector<Value> Interpreter::callFunction(const std::string& name, AstNode* a
             varTable.declareVar(param->name, resValue, false);
         }
         if (argValues.size() > params->children.size()) {
-            for (size_t i = params->children.size(); i < argValues.size(); i++) {
-                if (argValues[i].type != ValueType::NONE) {
-                    throw std::runtime_error("Too many arguments in function: " + name);
-                }
-            }
+            throw std::runtime_error("Too many arguments in function: " + name);
         }
         for (AstNode* ret: returns->children) {
             if (ret->children.empty()) {
@@ -375,6 +371,9 @@ void Interpreter::executeArrSet(AstNode* node) {
     Var& var = varTable.getVar(node->name);
     AstNode*  indices = node->children[0];
     Value value = evaluate(node->children[1]);
+    if (indices->children.size() != 1 && indices->children.size() != 2) {
+        throw std::runtime_error("Array SET needs 1 or 2 indexes: " + node->name);
+    }
 
     if (indices->children.size() == 1) {
         if (var.value.type != ValueType::ARR1UINT && var.value.type != ValueType::ARR1BOOL) {
