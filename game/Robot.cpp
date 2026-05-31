@@ -138,6 +138,9 @@ bool Robot::undo() {
     if (!lastPush.valid) {
         return false;
     }
+    if (roboX == lastPush.oldX && roboY == lastPush.oldY) {
+        return false;
+    }
     walls[lastPush.newY][lastPush.newX] = false;
     walls[lastPush.oldY][lastPush.oldX] = true;
     lastPush.valid = false;

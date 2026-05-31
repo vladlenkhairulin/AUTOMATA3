@@ -1,0 +1,85 @@
+1DARRAYOFUINT nums = [1, 2, 3]
+1DARRAYOFBOOL booleans = [TRUE, FALSE, TRUE]
+2DARRAYOFUINT matrix = [1, 2; 3, 4]
+2DARRAYOFBOOL boolMatrix = [TRUE, FALSE; FALSE, TRUE]
+UINT sizeNums = 0
+UINT sizeRows = 0
+UINT sizeCols0 = 0
+UINT sizeCols1 = 0
+UINT first = 0
+UINT second = 0
+UINT third = 0
+UINT skippedFirst = 0
+BOOLEAN skippedThird = FALSE
+BOOLEAN flagRes = FALSE
+BOOLEAN logicRes = FALSE
+
+FUNCTION changeArrays(index = 0, value = 0, flag = TRUE) {
+    nums(index) = value
+    booleans(index) = flag
+}
+
+value = 0 FUNCTION getNum(index = 0) {
+    value = nums(index)
+}
+
+[a = 0, b = 0, c = FALSE] FUNCTION multiFunc(x = 1, y = 2, z = TRUE) {
+    a = x
+    b = y
+    c = z
+}
+
+FUNCTION extendArrays() {
+    EXTEND1 nums 5
+    nums(3) = 10
+    nums(4) = 20
+    EXTEND1 booleans 5
+    booleans(3) = FALSE
+    booleans(4) = TRUE
+
+    EXTEND1 matrix 3
+    matrix(2, 1) = 6
+    EXTEND2 matrix 2 4
+    matrix(2, 2) = 7
+    matrix(2, 3) = 8
+
+    EXTEND1 boolMatrix 4
+    EXTEND2 boolMatrix 2 3
+    boolMatrix(2, 0) = TRUE
+    boolMatrix(2, 1) = FALSE
+    boolMatrix(2, 2) = TRUE
+    boolMatrix(3, 1) = TRUE
+}
+
+res = 0 FUNCTION countOff(start = 0) {
+    res = start
+    WHILE(res GT 0) DO {
+        DEC res
+    }
+}
+
+FUNCTION checkLogic() {
+    logicRes = FALSE
+    IF(NOT flagRes OR FALSE) {
+        logicRes = TRUE
+    } ELSE {
+        logicRes = FALSE
+    }
+}
+
+UINT temp = 0
+changeArrays(1, 99, TRUE)
+first = getNum(1)
+[first, second, flagRes] = multiFunc(7,,FALSE)
+[skippedFirst,,skippedThird] = multiFunc(11, 22, TRUE)
+extendArrays()
+
+sizeNums = SIZE1 nums
+sizeRows = SIZE1 matrix
+sizeCols0 = SIZE2 matrix 0
+sizeCols1 = SIZE2 matrix 2
+third = matrix(2, 3)
+checkLogic()
+
+UINT zero = 0
+zero = countOff(6)

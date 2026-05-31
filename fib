@@ -1,0 +1,28 @@
+res = 0 FUNCTION add(a = 0, b = 0) {
+    res = a
+    WHILE(b GT 0) DO {
+        INC res
+        DEC b
+    }
+}
+
+res = 0 FUNCTION fib(n = 0) {
+    IF( n LT 2 ) {
+        res = n
+    } ELSE {
+        UINT n1 = n
+        UINT n2 = n
+        UINT a = 0
+        UINT b = 0
+        DEC n1
+        DEC n2
+        DEC n2
+        a = fib(n1)
+        b = fib(n2)
+        res = add(a, b)
+    }
+}
+
+UINT n = 8
+UINT answer = 0
+answer = fib(n)

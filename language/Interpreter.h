@@ -45,6 +45,9 @@ public:
     explicit Interpreter(Robot* game) {
         this->game = game;
     };
+    Var& getVar(const std::string &name) {
+        return varTable.getVar(name);
+    }
 };
 
 

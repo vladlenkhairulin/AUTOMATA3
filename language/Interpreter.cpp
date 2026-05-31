@@ -13,7 +13,7 @@ void Interpreter::checkUint(const Value &value) {
 
 void Interpreter::run(AstNode* root) {
     execute(root);
-    varTable.printVarTable();
+    //varTable.printVarTable();
 }
 
 void Interpreter::execute(AstNode* node) {

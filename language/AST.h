@@ -39,7 +39,6 @@ struct AstNode {
     bool boolValue = false;
     bool isConst = false;
     std::vector<AstNode*> children;
-
     explicit AstNode(NodeType type) : nodeType(type) {};
 };
 
